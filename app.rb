@@ -24,15 +24,54 @@ get "/" do
 	404
 end
 
-post "/incoming/todoist/"
-
+post "/incoming/todoist/" do
 	
+  payload = params
+  payload = JSON.parse(request.body.read).symbolize_keys unless params[:path]
 
+  logger.info "Saving #{payload[:event_name]} with #{payload[:meta]}"
+
+  file = load_app.sitemap.find_resource_by_path payload[:path]
+	
+	puts params.to_json
+	
 	200
-
 end
 
+get "/todoist/summary" do
+	
+	todoist_url = "https://beta.todoist.com/API/v8/tasks"
 
+  api_key = ENV['TODOIST_ACCESS_TOKEN']
+  
+  response = HTTParty.get todoist_url, headers: {'Authorization' => "Bearer #{ ENV['TODOIST_ACCESS_TOKEN'] }"}
+	
+	# puts response.size
+	# puts response.to_yaml
+	# puts response.size
+	
+	# return the total count
+	
+	count = response.size
+	count.to_s
+	
+	todays_count = 0
+	
+	response.each do |item|
+		
+		puts item
+		if defined? item["due"] and not item["due"].nil?
+			if item["due"]["date"] == Time.now.strftime('%Y-%m-%d')
+				todays_count = todays_count + 1
+			end
+		end 
+	end
+	
+	return count.to_s + "," + todays_count.to_s
+	
+end 
+
+private 
 
 def particle_publish_event event_name, data_str
 
