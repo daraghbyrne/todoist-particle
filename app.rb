@@ -29,9 +29,9 @@ post "/incoming/todoist/" do
   payload = params
   payload = JSON.parse(request.body.read).symbolize_keys unless params[:path]
 
-  logger.info "Saving #{payload[:event_name]} with #{payload[:meta]}"
+  logger.info "Saving #{payload[:event_name]} "
 
-  file = load_app.sitemap.find_resource_by_path payload[:path]
+	particle_publish_event "todoist-incoming", payload[:event_name].to_s
 	
 	puts params.to_json
 	
